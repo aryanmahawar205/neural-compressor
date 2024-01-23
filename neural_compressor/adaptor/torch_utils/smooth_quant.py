@@ -1201,15 +1201,17 @@ class TorchSmoothQuant:
                 if self.insert_mul:
                     self.self_absorb_layers = self._get_all_layer_names(op_types)  # TODO: only support linear now.
                     # fetch modules with the same input
-                    group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
-                    if group_modules is not None:
-                        # use one input for qkv
-                        for k, v in group_modules.items():
-                            for i in v:
-                                if i in self.self_absorb_layers:
-                                    self.self_absorb_layers.pop(i)
-                            self.self_absorb_layers[v[0]] = v
-                        logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
+                    sharing_weight = False
+                    if sharing_weight:
+                        group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
+                        if group_modules is not None:
+                            # use one input for qkv
+                            for k, v in group_modules.items():
+                                for i in v:
+                                    if i in self.self_absorb_layers:
+                                        self.self_absorb_layers.pop(i)
+                                self.self_absorb_layers[v[0]] = v
+                            logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         str_op_types
